@@ -333,6 +333,7 @@ template <typename ArrowArrayType>
 class StringPropertyReadOnlyView {
 public:
   using value_type = std::string;
+  using const_reference = const value_type;
 
   static Result<StringPropertyReadOnlyView> Make(const ArrowArrayType& array) {
     return StringPropertyReadOnlyView(array);
@@ -340,10 +341,12 @@ public:
 
   bool IsValid(size_t i) const { return array_.IsValid(i); }
 
+#if 0
   value_type GetValue(size_t i) const {
     KATANA_LOG_DEBUG_ASSERT(IsValid(i));
     return array_.GetString(i);
   }
+#endif
 
   value_type operator[](size_t i) const {
     if (!IsValid(i)) {
@@ -351,6 +354,10 @@ public:
     }
     return GetValue(i);
   }
+  const_reference GetValue(size_t i) const {
+     return array_.GetString(i);
+  }
+ 
 
 private:
   StringPropertyReadOnlyView(const ArrowArrayType& array) : array_(array) {}

@@ -1,0 +1,2 @@
+add_executable(graph-generator basic_generator.cpp)
+target_link_libraries(graph-generator PRIVATE katana_galois LLVMSupport)

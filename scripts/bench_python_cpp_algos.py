@@ -71,7 +71,7 @@ def run_sssp(property_graph: PropertyGraph, input_args, source_node_file):
     sssp_plan = SsspPlan.delta_step(input_args["sssp_delta"])
 
     if not source_node_file == "":
-        if not os.path.exists(graph_path):
+        if not os.path.exists(source_node_file):
             print(f"Source node file doesn't exist: {graph_path}")
         sources = open(source_node_file, "r").readlines()
 
@@ -152,24 +152,46 @@ def run_pagerank(property_graph: PropertyGraph, input_args):
     property_graph.remove_node_property(property_name)
 
 
-def run_bc(property_graph: PropertyGraph, input_args):
+def run_bc(property_graph: PropertyGraph, input_args, source_node_file):
     property_name = "NewProp"
     start_node = input_args["source_node"]
     edge_prop_name = input_args["edge_wt"]
 
     bc_plan = BetweennessCentralityPlan.level()
 
-    sources = [start_node]
-    timer_algo_start = time.time()
-    betweenness_centrality(property_graph, property_name, sources, bc_plan)
-    timer_algo_end = time.time()
-    print(f"[TIMER] Time to run betweenness centrality : {round((timer_algo_end - timer_algo_start), 2)} seconds")
+    n = 4
+    if not source_node_file == "":
+        if not os.path.exists(source_node_file):
+            print(f"Source node file doesn't exist: {graph_path}")
+        sources = open(source_node_file, "r").readlines()
 
-    check_schema(property_graph, property_name)
+        for i in range(0, len(sources), n):
+            sources_to_use = [int(i) for i in sources[i : i + n]]
+            print(f"Using source: {sources_to_use}")
+            timer_algo_start = time.time()
+            betweenness_centrality(property_graph, property_name, sources_to_use, bc_plan)
+            timer_algo_end = time.time()
+            print(
+                f"[TIMER] Time to run betweenness centrality : {round((timer_algo_end - timer_algo_start), 2)} seconds"
+            )
 
-    stats = BetweennessCentralityStatistics(property_graph, property_name)
-    print(f"STATS:\n{stats}")
-    property_graph.remove_node_property(property_name)
+            check_schema(property_graph, property_name)
+
+            stats = BetweennessCentralityStatistics(property_graph, property_name)
+            print(f"STATS:\n{stats}")
+            property_graph.remove_node_property(property_name)
+    else:
+        sources = [start_node]
+        timer_algo_start = time.time()
+        betweenness_centrality(property_graph, property_name, sources, bc_plan)
+        timer_algo_end = time.time()
+        print(f"[TIMER] Time to run betweenness centrality : {round((timer_algo_end - timer_algo_start), 2)} seconds")
+
+        check_schema(property_graph, property_name)
+
+        stats = BetweennessCentralityStatistics(property_graph, property_name)
+        print(f"STATS:\n{stats}")
+        property_graph.remove_node_property(property_name)
 
 
 def run_tc(property_graph: PropertyGraph, input_args):
@@ -237,11 +259,12 @@ def run_louvain(property_graph: PropertyGraph, input_args):
 
 
 def run_all_gap(args):
-    print("Using threads:", katana.galois.set_active_threads(args.threads))
+    # print("Using threads:", katana.galois.set_active_threads(args.threads))
     inputs = [
         {
             "name": "GAP-road",
             "symmetric_input": "GAP-road",
+            "symmetric_clean_input": "GAP-road",
             "transpose_input": "GAP-road",
             "source_node": 18944626,
             "edge_wt": "value",
@@ -250,6 +273,7 @@ def run_all_gap(args):
         {
             "name": "GAP-kron",
             "symmetric_input": "GAP-kron",
+            "symmetric_clean_input": "GAP-kron",
             "tranpose_input": "GAP-kron",
             "source_node": 71328660,
             "edge_wt": "value",
@@ -258,6 +282,7 @@ def run_all_gap(args):
         {
             "name": "GAP-twitter",
             "symmetric_input": "GAP-twitter_symmetric",
+            "symmetric_clean_input": "GAP-twitter_symmetric_cleaned",
             "transpose_input": "GAP-twitter_transpose",
             "source_node": 19058681,
             "edge_wt": "value",
@@ -266,6 +291,7 @@ def run_all_gap(args):
         {
             "name": "GAP-web",
             "symmetric_input": "GAP-web_symmetric",
+            "symmetric_clean_input": "GAP-web_symmetric_cleaned",
             "transpose_input": "GAP-web_transpose",
             "source_node": 19879527,
             "edge_wt": "value",
@@ -275,7 +301,7 @@ def run_all_gap(args):
 
     # Load our graph
     input = next(item for item in inputs if item["name"] == args.graph)
-    if args.application in ["bfs", "sssp", "bc", "tc", "jaccard"]:
+    if args.application in ["bfs", "sssp", "bc", "jaccard"]:
         graph_path = f"{args.input_dir}/{input['name']}"
         if not os.path.exists(graph_path):
             print(f"Graph doesn't exist: {graph_path}")
@@ -290,19 +316,38 @@ def run_all_gap(args):
         print(f"#Nodes: {len(graph)}, #Edges: {graph.num_edges()}")
 
         if args.application == "bfs":
-            run_bfs(graph, input, args.source_nodes)
+            for t in range(args.trials):
+                run_bfs(graph, input, args.source_nodes)
 
         if args.application == "sssp":
-            run_sssp(graph, input, args.source_nodes)
+            for t in range(args.trials):
+                run_sssp(graph, input, args.source_nodes)
 
         if args.application == "jaccard":
-            run_jaccard(graph, input)
+            for t in range(args.trials):
+                run_jaccard(graph, input)
 
         if args.application == "bc":
-            run_bc(graph, input)
+            for t in range(args.trials):
+                run_bc(graph, input, args.source_nodes)
+
+    elif args.application in ["tc"]:
+        graph_path = f"{args.input_dir}/{input['symmetric_clean_input']}"
+        if not os.path.exists(graph_path):
+            print(f"Symmetric clean Graph doesn't exist: {graph_path}")
+
+        print(f"Running {args.application} on graph: {graph_path}")
+        timer_graph_construct_start = time.time()
+        graph = PropertyGraph(graph_path)
+        timer_graph_construct_end = time.time()
+        print(
+            f"[TIMER] Time to read propertyGraph : {round((timer_graph_construct_end - timer_graph_construct_start), 2)} seconds"
+        )
+        print(f"#Nodes: {len(graph)}, #Edges: {graph.num_edges()}")
 
         if args.application == "tc":
-            run_tc(graph, input)
+            for t in range(args.trials):
+                run_tc(graph, input)
 
     elif args.application in ["cc", "kcore", "louvain"]:
         graph_path = f"{args.input_dir}/{input['symmetric_input']}"
@@ -319,13 +364,16 @@ def run_all_gap(args):
         print(f"#Nodes: {len(graph)}, #Edges: {graph.num_edges()}")
 
         if args.application == "cc":
-            run_cc(graph, input)
+            for t in range(args.trials):
+                run_cc(graph, input)
 
         if args.application == "kcore":
-            run_kcore(graph, input)
+            for t in range(args.trials):
+                run_kcore(graph, input)
 
         if args.application == "louvain":
-            run_louvain(graph, input)
+            for t in range(args.trials):
+                run_louvain(graph, input)
 
     elif args.application in ["pagerank"]:
         ## Using transpose file pagerank pull which is expected
@@ -351,7 +399,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Benchmark performance of routines")
 
     parser.add_argument(
-        "--input-dir", default="./", help="Path to the input directory (default: %(default)s)",
+        "--input-dir",
+        default="./",
+        help="Path to the input directory (default: %(default)s)",
     )
 
     parser.add_argument(
@@ -373,7 +423,15 @@ if __name__ == "__main__":
         help="Application to run (default: %(default)s)",
     )
     parser.add_argument(
-        "--source-nodes", default="", help="Source nodes file(default: %(default)s)",
+        "--source-nodes",
+        default="",
+        help="Source nodes file(default: %(default)s)",
+    )
+    parser.add_argument(
+        "--trials",
+        type=int,
+        default=1,
+        help="Number of trials (default: %(default))",
     )
 
     parsed_args = parser.parse_args()

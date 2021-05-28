@@ -243,9 +243,10 @@ def run_kcore(property_graph: PropertyGraph, input_args):
 
 def run_louvain(property_graph: PropertyGraph, input_args):
     property_name = "NewProp"
+    edge_prop_name = input_args["edge_wt"]
 
     timer_algo_start = time.time()
-    louvain_clustering(property_graph, k, property_name)
+    louvain_clustering(property_graph, edge_prop_name, property_name)
     timer_algo_end = time.time()
     print(f"[TIMER] Time to run louvain: {round((timer_algo_end - timer_algo_start), 2)} seconds")
 
@@ -259,7 +260,7 @@ def run_louvain(property_graph: PropertyGraph, input_args):
 
 
 def run_all_gap(args):
-    # print("Using threads:", katana.galois.set_active_threads(args.threads))
+    print("Using threads:", katana.galois.set_active_threads(args.threads))
     inputs = [
         {
             "name": "GAP-road",

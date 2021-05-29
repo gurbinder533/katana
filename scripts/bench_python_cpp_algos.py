@@ -110,12 +110,12 @@ def run_sssp(property_graph: PropertyGraph, input_args, source_node_file):
 
 def run_jaccard(property_graph: PropertyGraph, input_args):
     property_name = "NewProp"
-    compare_node = 0
+    compare_node = input_args["source_node"]
 
     timer_algo_start = time.time()
     jaccard(property_graph, compare_node, property_name)
     timer_algo_end = time.time()
-    print(f"[TIMER] Time to run jaccard : {round((timer_algo_end - timer_algo_start), 2)} seconds")
+    print(f"[TIMER] Time to run jaccard on {compare_node} : {round((timer_algo_end - timer_algo_start), 2)} seconds")
 
     check_schema(property_graph, property_name)
 

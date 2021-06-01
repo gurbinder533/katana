@@ -30,17 +30,16 @@ def run_bfs(property_graph: PropertyGraph, input_args, source_node_file):
     start_node = input_args["source_node"]
 
     if not source_node_file == "":
-        if not os.path.exists(graph_path):
-            print(f"Source node file doesn't exist: {graph_path}")
+        if not os.path.exists(source_node_file):
+            print(f"Source node file doesn't exist: {source_node_file}")
         sources = open(source_node_file, "r").readlines()
 
         for source in sources:
             timer_algo_start = time.time()
-            bfs(property_graph, source, property_name)
+            bfs(property_graph, int(source), property_name)
             timer_algo_end = time.time()
             print(f"[TIMER] Time to run bfs on {source} : {round((timer_algo_end - timer_algo_start), 2)} seconds")
             check_schema(property_graph, property_name)
-            assert property_graph.get_node_property(property_name)[start_node].as_py() == 0
 
             bfs_assert_valid(property_graph, property_name)
 
@@ -54,7 +53,6 @@ def run_bfs(property_graph: PropertyGraph, input_args, source_node_file):
         print(f"[TIMER] Time to run bfs : {round((timer_algo_end - timer_algo_start), 2)} seconds")
 
         check_schema(property_graph, property_name)
-        assert property_graph.get_node_property(property_name)[start_node].as_py() == 0
 
         bfs_assert_valid(property_graph, property_name)
 
@@ -72,20 +70,18 @@ def run_sssp(property_graph: PropertyGraph, input_args, source_node_file):
 
     if not source_node_file == "":
         if not os.path.exists(source_node_file):
-            print(f"Source node file doesn't exist: {graph_path}")
+            print(f"Source node file doesn't exist: {source_node_file}")
         sources = open(source_node_file, "r").readlines()
 
         for source in sources:
             timer_algo_start = time.time()
-            sssp(property_graph, source, edge_prop_name, property_name, sssp_plan)
+            sssp(property_graph, int(source), edge_prop_name, property_name, sssp_plan)
             timer_algo_end = time.time()
             print(f"[TIMER] Time to run sssp on {source} : {round((timer_algo_end - timer_algo_start), 2)} seconds")
 
             check_schema(property_graph, property_name)
 
-            assert property_graph.get_node_property(property_name)[start_node].as_py() == 0
-
-            sssp_assert_valid(property_graph, start_node, edge_prop_name, property_name)
+            sssp_assert_valid(property_graph, int(source), edge_prop_name, property_name)
 
             stats = SsspStatistics(property_graph, property_name)
             print(f"STATS:\n{stats}")
@@ -98,8 +94,6 @@ def run_sssp(property_graph: PropertyGraph, input_args, source_node_file):
         print(f"[TIMER] Time to run sssp : {round((timer_algo_end - timer_algo_start), 2)} seconds")
 
         check_schema(property_graph, property_name)
-
-        assert property_graph.get_node_property(property_name)[start_node].as_py() == 0
 
         sssp_assert_valid(property_graph, start_node, edge_prop_name, property_name)
 
@@ -276,7 +270,7 @@ def run_all_gap(args):
             "name": "GAP-kron",
             "symmetric_input": "GAP-kron",
             "symmetric_clean_input": "GAP-kron",
-            "tranpose_input": "GAP-kron",
+            "transpose_input": "GAP-kron",
             "source_node": 71328660,
             "edge_wt": "value",
             "sssp_delta": 1,

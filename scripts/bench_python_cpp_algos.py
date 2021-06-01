@@ -252,9 +252,9 @@ def run_louvain(property_graph: PropertyGraph, input_args):
 
     check_schema(property_graph, property_name)
 
-    louvain_clustering_assert_valid(property_graph, property_name)
+    louvain_clustering_assert_valid(property_graph, edge_prop_name, property_name)
 
-    stats = LouvainClusteringStatistics(property_graph, property_name)
+    stats = LouvainClusteringStatistics(property_graph, edge_prop_name, property_name)
     print(f"STATS:\n{stats}")
     property_graph.remove_node_property(property_name)
 

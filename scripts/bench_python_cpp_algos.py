@@ -246,7 +246,8 @@ def run_louvain(property_graph: PropertyGraph, input_args):
     edge_prop_name = input_args["edge_wt"]
 
     timer_algo_start = time.time()
-    louvain_clustering(property_graph, edge_prop_name, property_name)
+    louvain_plan = LouvainClusteringPlan.do_all(False, 0.0001, 0.0001, 10000, 100)
+    louvain_clustering(property_graph, edge_prop_name, property_name, louvain_plan)
     timer_algo_end = time.time()
     print(f"[TIMER] Time to run louvain: {round((timer_algo_end - timer_algo_start), 2)} seconds")
 

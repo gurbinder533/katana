@@ -24,7 +24,7 @@ static cll::opt<GenType> GenType(
         clEnumVal(AssetConA, "Asset connection A"),
         clEnumVal(AssetConB, "Asset connection B")));
 
-cll::opt<int> blockID("block_num", cll::desc("Specify the block number to process 0-199"), cll::value_desc("0-199"));
+cll::opt<int> blockID("block_num", cll::desc("Specify the block number to process 0-1999"), cll::value_desc("0-1999"));
 
 cll::opt<int> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate. Default is 20 billion"), cll::value_desc("value"));
 
@@ -834,9 +834,9 @@ main(int argc, char** argv) {
     } 
     uint64_t block_size = num_nodes/2000;  // tcook: 100M block size  20B/200
     uint64_t start_ID = blockID * block_size;
-    if(blockID < 0 || blockID > 199)
+    if(blockID < 0 || blockID > 1999)
     {
-      std::cout << "ERROR: block_num must be between 0 and 199. Quitting." << std::endl; 
+      std::cout << "ERROR: block_num must be between 0 and 1999. Quitting." << std::endl; 
       exit (-1); 
     }
     std::cout << "Node Generation: start_ID = " << start_ID << " block_size = " << block_size << " block_num = " << blockID << " num_nodes = " << num_nodes << std::endl;

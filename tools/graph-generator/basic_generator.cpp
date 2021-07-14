@@ -12,21 +12,28 @@
 using namespace std::chrono;
 namespace cll = llvm::cl;
 
-enum GenType { Nodes, FriendConA, FriendConB, AssetConA, AssetConB, BigNodes };
+enum GenType { Nodes, FriendConA, FriendConB, AssetConA, AssetConB, BigNodes, NodesToInsert };
 
 static cll::opt<GenType> GenType(
     "GenType", cll::desc("Available generation types:"),
     cll::values(
         clEnumVal(Nodes, "generate nodes file"),
+        clEnumVal(NodesToInsert, "generate new node to insert"),
         clEnumVal(BigNodes, "generate 2^32 "),
         clEnumVal(FriendConA, "Friend connection A"),
         clEnumVal(FriendConB, "Friend connection B"),
         clEnumVal(AssetConA, "Asset connection A"),
         clEnumVal(AssetConB, "Asset connection B")));
 
-cll::opt<int> blockID("block_num", cll::desc("Specify the block number to process 0-1999"), cll::value_desc("0-1999"));
+static cll::opt<std::string> dir_name("dir_name", cll::desc("Specify the directory to write output (default value ./)"), cll::init("./"));
+static cll::opt<uint64_t> blockID("block_num", cll::desc("Specify the block number to process 0-1999"), cll::value_desc("0-1999"));
 
-cll::opt<int> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate. Default is 20 billion"), cll::value_desc("value"));
+//cll::opt<uint64_t> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate. Default is 20 billion"), cll::value_desc("value"));
+//cll::opt<uint64_t> num_nodes_to_insert("num_nodes_to_insert", cll::desc("Specify the number of new nodes to generate. Default is 80k"), cll::value_desc("value"));
+
+static cll::opt<uint64_t> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate (default value 20 billion)"), cll::init(20000000000));
+static cll::opt<uint64_t> num_nodes_to_insert("num_nodes_to_insert", cll::desc("Specify the number of new nodes to generate for insertion (default value 80 thousand)"), cll::init(80000));
+static cll::opt<uint64_t> start_id_insertion("start_id_insertion", cll::desc("Specify the start id for the nodes to insert (default value 0)"), cll::init(0));
 
 void
 CreateNodeDegreeWithMean(
@@ -295,8 +302,11 @@ returnYesWithBias(uint32_t value) {
 
 void
 CreateNodeFile(
-    std::string file_name, [[maybe_unused]] uint64_t num_nodes, float prob, uint64_t start_ID) {
+    std::string file_name, [[maybe_unused]] uint64_t num_nodes, float prob, uint64_t start_ID, bool is_inserting=false) {
   std::ofstream node_file(file_name);
+  if(is_inserting) {
+	  node_file << "creationTime|";
+  }	  
   node_file << "id|userIsSuspended|userIsBlacklisted|suspended|strictSuspended|"
                "firstName|";
   node_file << "lastName|phoneIsVerified|daysOnFile|isActive|"
@@ -325,12 +335,15 @@ CreateNodeFile(
 //  std::uniform_int_distribution<std::mt19937::result_type> dest_node_id(
 //      0, num_nodes - 1);
 
+  uint64_t total_nodes = start_ID + num_nodes; 
   std::uniform_int_distribution<std::mt19937::result_type> dest_node_id(
-      start_ID, num_nodes - 1);
+      start_ID, total_nodes - 1);
 
   // pick percentage of suspended and blacklisted
   uint64_t num_prob = prob * num_nodes;
   std::cout << "Suspended : " << num_prob << "\n";
+  std::cout << "prob : " << prob << "\n";
+  std::cout << "num nodes : " << num_nodes << "\n";
   std::vector<uint64_t> suspended_vec(num_prob, 0);
   std::vector<uint64_t> strict_suspended_vec(num_prob, 0);
   std::vector<uint64_t> blacklisted_vec(num_prob, 0);
@@ -414,6 +427,11 @@ CreateNodeFile(
 
     uint32_t is_active = (account_status == "active") ? 1 : 0;
 
+  if(is_inserting) {
+    auto creation_time = randomTime(
+        system_clock::now(), (system_clock::now()));
+    node_file << std::put_time(&creation_time, "%FT%T") << "|";  //creationTime
+  }
     node_file << n << "|";
     node_file << suspended_string << "|";         //useIsSuspended
     node_file << blacklisted_string << "|";       //userIsBlacklisted
@@ -834,7 +852,7 @@ main(int argc, char** argv) {
     } 
     uint64_t block_size = num_nodes/2000;  // tcook: 100M block size  20B/200
     uint64_t start_ID = blockID * block_size;
-    if(blockID < 0 || blockID > 1999)
+    if(blockID < uint64_t{0} || blockID > 1999)
     {
       std::cout << "ERROR: block_num must be between 0 and 1999. Quitting." << std::endl; 
       exit (-1); 
@@ -847,6 +865,14 @@ main(int argc, char** argv) {
     
     break;
   }
+  case NodesToInsert: {
+    std::cout << "New nodes to insert : " << num_nodes_to_insert << " Starting from :" <<  start_id_insertion << "\n";			      
+    std::string fname = dir_name + "/NodeFileInsert_" + std::to_string(num_nodes_to_insert) + "start_" + std::to_string(start_id_insertion); 
+    CreateNodeFile(fname, num_nodes_to_insert, .0001, start_id_insertion, true);
+    
+    break;
+  }
+
   case AssetConA: {
     std::cout << "AssetConA\n";
     /////ASSETConA

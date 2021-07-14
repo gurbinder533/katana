@@ -933,9 +933,14 @@ main(int argc, char** argv) {
 //        num_nodes, num_edges, node_degree_assetA, 0.94, 8, 0.058, 130, 0.001, 1725, 0.000001, 13667, 31000);
 
 // tcook: update for paypal 40B edges but 20B nodes, basically 200x nodes but only 2x edges: 
-    CreateNodeDegreeWithMean(
-      num_nodes, num_edges, node_degree_assetA, 0.94, 1, 0.058, 1, 0.001, 600, 0.000001, 13667, 31000);
-    
+//    CreateNodeDegreeWithMean(
+//      num_nodes, num_edges, node_degree_assetA, 0.94, 1, 0.058, 1, 0.001, 600, 0.000001, 13667, 31000);
+
+     // tcook - new distribution for 20B - should be 4.1B edges: 
+    CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_assetA, 
+		    0.01, 2, 0.012, 7, 0.0003, 140, 0.000015, 4000, 8000);
+
+   
     //CreateEdgesAsset("fileAssetA", node_degree_assetA, "AssetConA");
     CreateEdgesAssetSplitByEdges("fileAssetA", node_degree_assetA, "AssetConA");
 
@@ -954,8 +959,12 @@ main(int argc, char** argv) {
 //        num_nodes, num_edges, node_degree_assetB, 0.506, 28, 0.489, 221, 0.0005, 3667, 0.00004, 15000, 35000);
 
 // tcook: update for paypal 40B edges but 20B nodes, basically 200x nodes but only 2x edges: 
-      CreateNodeDegreeWithMean(
-          num_nodes, num_edges, node_degree_assetB, 0.506, 5, 0.489, 20, 0.0005, 300, 0.000004, 3000, 2020);
+//      CreateNodeDegreeWithMean(
+//          num_nodes, num_edges, node_degree_assetB, 0.506, 5, 0.489, 20, 0.0005, 300, 0.000004, 3000, 2020);
+
+    // tcook - new distribution for 20B - should be ~25.7B edges:
+    CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_assetB, 
+		    0.5, 2, 0.015, 12, 0.0003, 300, 0.000015, 1000, 2020);
 
     //CreateEdgesAsset("fileAssetB", node_degree_assetB, "AssetConB");
     CreateEdgesAssetSplitByEdges("fileAssetB", node_degree_assetB, "AssetConB");
@@ -975,10 +984,12 @@ main(int argc, char** argv) {
 //      CreateNodeDegreeWithMean(
 //        num_nodes, num_edges, node_degree_friendA, .6, 1, .2, 7, 0.000026, 1336, 0.000018, 1, 2020);
 // tcook: update for paypal 40B edges but 20B nodes, basically 200x nodes but only 2x edges: 
-        CreateNodeDegreeWithMean(
-          num_nodes, num_edges, node_degree_friendA, 0.5, 1, 0.25, 3, 0.125, 5, .125, 1, 2020);
-
+//        CreateNodeDegreeWithMean(
+//          num_nodes, num_edges, node_degree_friendA, 0.5, 1, 0.25, 3, 0.125, 5, .125, 1, 2020);
+	  CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_friendA, 
+			  0.05, 2, 0.008, 10, 0.00003, 200, .000015, 800, 2020);
     //CreateEdgesFriend("fileFriendB", node_degree_friendB, "FriendConB");
+    // tcook - new distribution for 20B should total: 3.9B edges:
     CreateEdgesFriendSplitByEdges(
         "fileFriendA", node_degree_friendA, "FriendConA");
 
@@ -991,16 +1002,18 @@ main(int argc, char** argv) {
     // num_edges = 3000000000; // 3B
     num_edges = 6000000000; // tcook: doubled to 6B
     std::vector<uint64_t> node_degree_friendB(num_nodes, 0);
-    CreateNodeDegreeWithMean(
-        num_nodes, num_edges, node_degree_friendB, 0.79, 8, 0.2, 107, 0.0014,
-        1667, 0.0, 13667, 13400);
+//    CreateNodeDegreeWithMean(
+//        num_nodes, num_edges, node_degree_friendB, 0.79, 8, 0.2, 107, 0.0014,
+//        1667, 0.0, 13667, 13400);
     //CreateNodeDegreeWithMean(
       //num_nodes, num_edges, node_degree_friendB, 0.79, 1, 0.0, 100, 0.0014, 1000, 0.0, 13667, 13400);
 
 // tcook: update for paypal 40B edges but 20B nodes, basically 200x nodes but only 2x edges: 
-    CreateNodeDegreeWithMean(
-        num_nodes, num_edges, node_degree_friendB, 0.78, 2, 0.2, 7,0.0014, 32, 0.0, 13667, 2020);
-
+//    CreateNodeDegreeWithMean(
+//        num_nodes, num_edges, node_degree_friendB, 0.78, 2, 0.2, 7,0.0014, 32, 0.0, 13667, 2020);
+    // tcook - new distribution for 20B should total: 6.3B edges:
+    CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_friendB, 
+		    0.13, 2, 0.001, 10, 0.0003, 100, 0.000015, 1000, 2020);
     //CreateEdgesFriend("fileFriendB", node_degree_friendB, "FriendConB");
     CreateEdgesFriendSplitByEdges(
         "fileFriendB", node_degree_friendB, "FriendConB");

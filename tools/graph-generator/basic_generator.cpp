@@ -12,13 +12,14 @@
 using namespace std::chrono;
 namespace cll = llvm::cl;
 
-enum GenType { Nodes, FriendConA, FriendConB, AssetConA, AssetConB, BigNodes, NodesToInsert };
+enum GenType { Nodes, FriendConA, FriendConB, AssetConA, AssetConB, BigNodes, NodesToInsert, EdgesToInsert };
 
 static cll::opt<GenType> GenType(
     "GenType", cll::desc("Available generation types:"),
     cll::values(
         clEnumVal(Nodes, "generate nodes file"),
         clEnumVal(NodesToInsert, "generate new node to insert"),
+        clEnumVal(EdgesToInsert, "generate new edges to insert"),
         clEnumVal(BigNodes, "generate 2^32 "),
         clEnumVal(FriendConA, "Friend connection A"),
         clEnumVal(FriendConB, "Friend connection B"),
@@ -28,11 +29,9 @@ static cll::opt<GenType> GenType(
 static cll::opt<std::string> dir_name("dir_name", cll::desc("Specify the directory to write output (default value ./)"), cll::init("./"));
 static cll::opt<uint64_t> blockID("block_num", cll::desc("Specify the block number to process 0-1999"), cll::value_desc("0-1999"));
 
-//cll::opt<uint64_t> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate. Default is 20 billion"), cll::value_desc("value"));
-//cll::opt<uint64_t> num_nodes_to_insert("num_nodes_to_insert", cll::desc("Specify the number of new nodes to generate. Default is 80k"), cll::value_desc("value"));
-
 static cll::opt<uint64_t> user_num_nodes("num_nodes", cll::desc("Specify the number of nodes to generate (default value 20 billion)"), cll::init(20000000000));
 static cll::opt<uint64_t> num_nodes_to_insert("num_nodes_to_insert", cll::desc("Specify the number of new nodes to generate for insertion (default value 80 thousand)"), cll::init(80000));
+static cll::opt<uint64_t> num_edges_to_insert("num_edges_to_insert", cll::desc("Specify the number of new edges to generate for insertion (default value 0 thousand)"), cll::init(0));
 static cll::opt<uint64_t> start_id_insertion("start_id_insertion", cll::desc("Specify the start id for the nodes to insert (default value 0)"), cll::init(0));
 
 void
@@ -540,7 +539,7 @@ CreateEdgesAssetSplitByEdges(
     uint64_t degree = node_degree[n];
     while (degree) {
       count++;
-      uint32_t dest_id = uint32_t(dest_node_id(rng));
+      uint64_t dest_id = uint64_t(dest_node_id(rng));
       auto tm = randomTime(
           (system_clock::now() - hours(44 * 365 * 10)), (system_clock::now()));
 
@@ -835,6 +834,56 @@ CreateNodeDegreeSimple(
   return current_num_edges;
 }
 
+void
+InsertEdgesSplitByEdges(
+    std::string file_name, uint64_t num_nodes, uint64_t num_edges) {
+  std::random_device dev;
+  std::mt19937 rng(dev());
+  std::uniform_int_distribution<std::mt19937::result_type> dest_node_id(
+      0, num_nodes - 1);  // distribution in range [0, num_nodes]
+
+  std::uniform_int_distribution<std::mt19937::result_type> type_gen(
+      0, 3);  // distribution in range [0, num_nodes]
+  std::vector<std::string> types{"FriendConA", "FriendConB", "AssetConA", "AssetConB"};
+  uint64_t count = 0;
+  uint64_t batch_size = 100000000;
+  uint32_t part = 0;
+  uint64_t n = 0;
+
+  std::string file_name_part = dir_name + "/" + file_name + "_batch_" + std::to_string(part);
+  std::ofstream edge_file(file_name_part);
+  edge_file << "Account1.id|Account2.id|type|date\n";
+  std::cout << "Count : " << count << "\n";
+
+  for (; n < num_edges; ++n) {
+      count++;
+      uint64_t src_id = uint64_t(dest_node_id(rng));
+      uint64_t dest_id = uint64_t(dest_node_id(rng));
+      auto tm = randomTime(
+          (system_clock::now()), (system_clock::now()));
+
+      std::string edge_type = types[type_gen(rng)]; 
+      edge_file << src_id << "|" << dest_id << "|" << edge_type << "|"
+                << std::put_time(&tm, "%FT%T") << "\n";
+      if(edge_type == "FriendConA" || edge_type == "FriendConB") {
+	      edge_file << dest_id << "|" << src_id << "|" << edge_type << "|"
+			<< std::put_time(&tm, "%FT%T") << "\n";
+	      count++;
+      }
+
+      if (count >= batch_size) {
+        std::cout << "Count : " << count << "\n";
+        edge_file.close();
+        part++;
+        count = 0;
+        std::string file_name_part = dir_name + "/" + file_name + "_batch_" + std::to_string(part);
+        edge_file.open(file_name_part);
+        edge_file << "Account1.id|Account2.id|type|date\n";
+      }
+    }
+}
+
+
 int
 main(int argc, char** argv) {
   llvm::cl::ParseCommandLineOptions(argc, argv);
@@ -955,6 +1004,14 @@ main(int argc, char** argv) {
     //CreateEdgesFriend("fileFriendB", node_degree_friendB, "FriendConB");
     CreateEdgesFriendSplitByEdges(
         "fileFriendB", node_degree_friendB, "FriendConB");
+
+    break;
+  }
+  case EdgesToInsert: {
+    std::cout << "EdgesToInsert\n";
+    std::string fname = "EdgeFileInsert_" + std::to_string(num_edges_to_insert);
+    InsertEdgesSplitByEdges(
+        fname, user_num_nodes, num_edges_to_insert);
 
     break;
   }

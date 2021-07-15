@@ -60,9 +60,11 @@ CreateNodeDegreeWithMean(
       {lower, triangle_tip, upper},
       [&](double x) { return x == triangle_tip ? 1. : 0.; });
   uint64_t current_num_edges = 0;
+  uint64_t current_num_edges_tmp = 0;
   std::cout << "Range: " << 0 << " : " << num_type1 << "\n";
   for (uint64_t n = 0; n < num_type1; ++n) {
-    node_degree[n] = uint64_t(dist(eng));
+    auto random_degree = dist(eng);
+    node_degree[n] = (random_degree < 0) ? 0 : uint64_t(random_degree);
     current_num_edges += node_degree[n];
   }
 
@@ -76,8 +78,14 @@ CreateNodeDegreeWithMean(
 
   if (num_type1 > 0) {
     for (uint64_t n = 0; n < 1000; ++n) {
-      uint64_t node_id = dist_node_id(rng);
-      node_degree[node_id] = uint64_t(dist_type1(rng1));
+      auto random_node_id = dist_node_id(rng);
+      while(random_node_id < 0.0) {
+      	random_node_id = dist_node_id(rng);
+      }
+      uint64_t node_id = uint64_t(random_node_id);
+
+      auto random_degree = dist_type1(rng1);
+      node_degree[node_id] = (random_degree < 0.0) ? 0 : uint64_t(random_degree);
       current_num_edges += node_degree[node_id];
     }
   }
@@ -96,9 +104,12 @@ CreateNodeDegreeWithMean(
       [&](double x) { return x == triangle_tip2 ? 1. : 0.; });
 
   std::cout << "Range: " << num_type1 << " : " << num_type1 + num_type2 << "\n";
+  current_num_edges_tmp = 0;
   for (uint64_t n = num_type1; n < num_type1 + num_type2; ++n) {
-    node_degree[n] = uint64_t(dist2(eng2));
+    auto random_degree = dist2(eng2);
+    node_degree[n] = (random_degree < 0.0) ? 0 : uint64_t(random_degree);
     current_num_edges += node_degree[n];
+    current_num_edges_tmp += node_degree[n];
   }
 
   //Add 1k nodes high degree nodes in this range
@@ -111,8 +122,14 @@ CreateNodeDegreeWithMean(
 
   if (num_type2 > 0) {
     for (uint64_t n = 0; n < 1000; ++n) {
-      uint64_t node_id = dist_node_id2(rng);
-      node_degree[node_id] = uint64_t(dist_type2(rng2));
+      auto random_node_id = dist_node_id2(rng);
+      while(random_node_id < 0.0) {
+      	random_node_id = dist_node_id2(rng);
+      }
+      uint64_t node_id = uint64_t(random_node_id);
+
+      auto random_degree = dist_type2(eng2);
+      node_degree[node_id] = (random_degree < 0.0) ? 0 : uint64_t(random_degree);
       current_num_edges += node_degree[node_id];
     }
   }
@@ -120,6 +137,10 @@ CreateNodeDegreeWithMean(
   std::cout << "current num edges : " << current_num_edges
             << " : MEAN : " << current_num_edges / (num_type1 + num_type2)
             << "\n";
+  std::cout << "current num edges type2: " << current_num_edges_tmp
+            << " : MEAN : " << current_num_edges_tmp / (num_type2)
+            << "\n";
+
 
   /** 
      * Fill node_degree for range3
@@ -136,7 +157,8 @@ CreateNodeDegreeWithMean(
             << num_type1 + num_type2 + num_type3 << "\n";
   for (uint64_t n = num_type1 + num_type2;
        n < num_type1 + num_type2 + num_type3; ++n) {
-    node_degree[n] = uint64_t(dist3(eng3));
+    auto random_degree = dist3(eng3);
+    node_degree[n] = (random_degree < 0.0) ? 0 : uint64_t(random_degree);
     current_num_edges += node_degree[n];
   }
 
@@ -158,7 +180,8 @@ CreateNodeDegreeWithMean(
             << num_type1 + num_type2 + num_type3 + num_type4 << "\n";
   for (uint64_t n = num_type1 + num_type2 + num_type3;
        n < num_type1 + num_type2 + num_type3 + num_type4; ++n) {
-    node_degree[n] = uint64_t(dist4(eng4));
+    auto random_degree = dist4(eng4);
+    node_degree[n] = (random_degree < 0.0) ? 0 : uint64_t(random_degree);
     current_num_edges += node_degree[n];
   }
 
@@ -929,6 +952,7 @@ main(int argc, char** argv) {
     // num_edges = 1600000000;  // 1.6 B
     num_edges = 3200000000;  // tcook: doubled to 3.2 B
     std::vector<uint64_t> node_degree_assetA(num_nodes, 0);
+    std::cout << "--->" <<  node_degree_assetA[200000000] << "\n";
 //    CreateNodeDegreeWithMean(
 //        num_nodes, num_edges, node_degree_assetA, 0.94, 8, 0.058, 130, 0.001, 1725, 0.000001, 13667, 31000);
 
@@ -937,11 +961,11 @@ main(int argc, char** argv) {
 //      num_nodes, num_edges, node_degree_assetA, 0.94, 1, 0.058, 1, 0.001, 600, 0.000001, 13667, 31000);
 
      // tcook - new distribution for 20B - should be 4.1B edges: 
+    //CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_assetA, 
+//		    0.01, 2, 0.012, 7, 0.0003, 140, 0.000015, 4000, 8000);
     CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_assetA, 
-		    0.01, 2, 0.012, 7, 0.0003, 140, 0.000015, 4000, 8000);
+		    0.07, 2, 0.0003, 140, 0.000015, 2000, 0, 10000, 8000);
 
-   
-    //CreateEdgesAsset("fileAssetA", node_degree_assetA, "AssetConA");
     CreateEdgesAssetSplitByEdges("fileAssetA", node_degree_assetA, "AssetConA");
 
     break;
@@ -964,9 +988,8 @@ main(int argc, char** argv) {
 
     // tcook - new distribution for 20B - should be ~25.7B edges:
     CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_assetB, 
-		    0.5, 2, 0.015, 12, 0.0003, 300, 0.000015, 1000, 2020);
+		    0.6, 2, 0.0003, 300, 0.000015, 300, 0.0000015, 10001, 2020);
 
-    //CreateEdgesAsset("fileAssetB", node_degree_assetB, "AssetConB");
     CreateEdgesAssetSplitByEdges("fileAssetB", node_degree_assetB, "AssetConB");
 
     break;
@@ -987,7 +1010,7 @@ main(int argc, char** argv) {
 //        CreateNodeDegreeWithMean(
 //          num_nodes, num_edges, node_degree_friendA, 0.5, 1, 0.25, 3, 0.125, 5, .125, 1, 2020);
 	  CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_friendA, 
-			  0.05, 2, 0.008, 10, 0.00003, 200, .000015, 800, 2020);
+			  0.06, 2, 0.0002, 104, 0.000015, 2000, .0000015, 10006, 2020);
     //CreateEdgesFriend("fileFriendB", node_degree_friendB, "FriendConB");
     // tcook - new distribution for 20B should total: 3.9B edges:
     CreateEdgesFriendSplitByEdges(
@@ -1013,8 +1036,7 @@ main(int argc, char** argv) {
 //        num_nodes, num_edges, node_degree_friendB, 0.78, 2, 0.2, 7,0.0014, 32, 0.0, 13667, 2020);
     // tcook - new distribution for 20B should total: 6.3B edges:
     CreateNodeDegreeWithMean(num_nodes, num_edges, node_degree_friendB, 
-		    0.13, 2, 0.001, 10, 0.0003, 100, 0.000015, 1000, 2020);
-    //CreateEdgesFriend("fileFriendB", node_degree_friendB, "FriendConB");
+		    0.06, 2, 0.0007, 106, 0.00007, 1010, 0.000004, 10009, 2020);
     CreateEdgesFriendSplitByEdges(
         "fileFriendB", node_degree_friendB, "FriendConB");
 
